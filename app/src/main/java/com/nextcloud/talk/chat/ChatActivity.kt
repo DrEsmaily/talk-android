@@ -101,6 +101,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.common.util.concurrent.ListenableFuture
 import com.nextcloud.android.common.ui.color.ColorUtil
 import com.nextcloud.talk.BuildConfig
+import com.nextcloud.talk.utils.SyncMeDiagnostics
 import com.nextcloud.talk.R
 import com.nextcloud.talk.activities.BaseActivity
 import com.nextcloud.talk.activities.CallActivity
@@ -573,7 +574,7 @@ class ChatActivity :
         val syncMeChatOpenStartedAt = SystemClock.elapsedRealtime()
         super.onCreate(savedInstanceState)
         NextcloudTalkApplication.sharedApplication!!.componentApplication.inject(this)
-        if (BuildConfig.DEBUG) Log.d("SyncMeChatTiming", "chat activity injected in ${SystemClock.elapsedRealtime() - syncMeChatOpenStartedAt} ms")
+        SyncMeDiagnostics.record(this, "activity_injected", SyncMeDiagnostics.elapsedSince(syncMeChatOpenStartedAt))
 
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -619,8 +620,10 @@ class ChatActivity :
         }
 
         lifecycleScope.launch {
+            val syncMeUserLookupStartedAt = SystemClock.elapsedRealtime()
             currentUserProvider.getCurrentUser()
                 .onSuccess { user ->
+                    SyncMeDiagnostics.record(this@ChatActivity, "current_user_ready", SyncMeDiagnostics.elapsedSince(syncMeUserLookupStartedAt))
                     conversationUser = user
                     handleIntent(intent)
                     val urlForChatting = ApiUtils.getUrlForChat(chatApiVersion, conversationUser?.baseUrl, roomToken)
@@ -633,7 +636,8 @@ class ChatActivity :
                         urlForChatting,
                         conversationThreadId
                     )
-                    if (BuildConfig.DEBUG) Log.d("SyncMeChatTiming", "initData returned in ${SystemClock.elapsedRealtime() - syncMeInitStartedAt} ms; activity elapsed ${SystemClock.elapsedRealtime() - syncMeChatOpenStartedAt} ms")
+                    SyncMeDiagnostics.record(this@ChatActivity, "init_data_returned", SyncMeDiagnostics.elapsedSince(syncMeInitStartedAt))
+                    SyncMeDiagnostics.record(this@ChatActivity, "chat_setup_elapsed", SyncMeDiagnostics.elapsedSince(syncMeChatOpenStartedAt))
 
                     conversationThreadId?.let {
                         val threadUrl = ApiUtils.getUrlForThread(
@@ -649,6 +653,7 @@ class ChatActivity :
                     messageInputViewModel.setData(chatViewModel.getChatRepository())
 
                     initObservers()
+                    SyncMeDiagnostics.record(this@ChatActivity, "observers_ready", SyncMeDiagnostics.elapsedSince(syncMeChatOpenStartedAt))
 
                     pendingTargetMessageId?.let { messageId ->
                         lifecycleScope.launch {
@@ -2067,6 +2072,7 @@ class ChatActivity :
     override fun onResume() {
         super.onResume()
 
+        SyncMeDiagnostics.record(this, "activity_resumed", 0)
         logConversationInfos("onResume")
 
         pullChatMessagesPending = false

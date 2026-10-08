@@ -8,6 +8,8 @@
 package com.nextcloud.talk.chat.viewmodels
 
 import android.content.Context
+import android.os.SystemClock
+import com.nextcloud.talk.utils.SyncMeDiagnostics
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -173,6 +175,10 @@ class MessageInputViewModel :
         threadTitle: String?
     ) {
         val referenceId = SendMessageUtils().generateReferenceId()
+        val syncMeSendStartedAt = SystemClock.elapsedRealtime()
+        NextcloudTalkApplication.sharedApplication?.let {
+            SyncMeDiagnostics.record(it, "send_pressed", 0L)
+        }
         Log.d(TAG, "Random SHA-256 Hash: $referenceId")
 
         viewModelScope.launch {
@@ -194,6 +200,9 @@ class MessageInputViewModel :
         }
 
         viewModelScope.launch {
+            NextcloudTalkApplication.sharedApplication?.let {
+                SyncMeDiagnostics.record(it, "send_network_started", SystemClock.elapsedRealtime() - syncMeSendStartedAt)
+            }
             chatRepository.sendChatMessage(
                 credentials,
                 url,
@@ -204,6 +213,9 @@ class MessageInputViewModel :
                 referenceId,
                 threadTitle
             ).collect { result ->
+                NextcloudTalkApplication.sharedApplication?.let {
+                    SyncMeDiagnostics.record(it, if (result.isSuccess) "send_network_success" else "send_network_error", SystemClock.elapsedRealtime() - syncMeSendStartedAt)
+                }
                 if (result.isSuccess) {
                     Log.d(TAG, "received ref id: " + (result.getOrNull()?.referenceId ?: "none"))
 

@@ -1,6 +1,34 @@
-Failed build run: 37821347309
-Commit: f326d58335c051bf4d74b34a35151517cedbda4f
+Failed build run: 37822319918
+Commit: fa525262a621302638024638506d388099708e6d
 Branch: syncme/stable-25.0.2
-Build details: https://github.com/DrEsmaily/talk-android/actions/runs/37821347309
+Build details: https://github.com/DrEsmaily/talk-android/actions/runs/37822319918
 ---
-Gradle log unavailable: failure occurred before compilation.
+> Configure project :app
+> Task :app:generateQaDebugAssets UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preQaDebugBuild UP-TO-DATE
+> Task :app:mergeQaDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateQaDebugBuildConfig
+> Task :app:generateQaDebugResources
+> Task :app:javaPreCompileQaDebug
+> Task :app:mergeQaDebugResources
+> Task :app:packageQaDebugResources
+> Task :app:dataBindingMergeDependencyArtifactsQaDebug
+> Task :app:processQaDebugNavigationResources
+> Task :app:mergeQaDebugAssets
+> Task :app:compressQaDebugAssets
+> Task :app:parseQaDebugLocalResources
+> Task :app:generateQaDebugRFile
+> Task :app:desugarQaDebugFileDependencies
+> Task :app:generateQaDebugGlobalSynthetics
+> Task :app:mapQaDebugSourceSetPaths
+> Task :app:checkQaDebugAarMetadata FAILED
+> Task :app:compileQaDebugNavigationResources
+> Task :app:checkQaDebugDuplicateClasses
+FAILURE: Build failed with an exception.
+Execution failed for task ':app:checkQaDebugAarMetadata' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckAarMetadataWorkAction
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at <URL>
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:checkQaDebugAarMetadata' (registered by plugin 'com.android.internal.application').

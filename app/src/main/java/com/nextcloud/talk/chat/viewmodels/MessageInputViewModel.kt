@@ -203,7 +203,8 @@ class MessageInputViewModel :
             NextcloudTalkApplication.sharedApplication?.let {
                 SyncMeDiagnostics.record(it, "send_network_started", SystemClock.elapsedRealtime() - syncMeSendStartedAt)
             }
-            chatRepository.sendChatMessage(
+            val syncMeRepositoryCallStartedAt = SystemClock.elapsedRealtime()
+            val syncMeSendFlow = chatRepository.sendChatMessage(
                 credentials,
                 url,
                 message,
@@ -212,7 +213,23 @@ class MessageInputViewModel :
                 sendWithoutNotification,
                 referenceId,
                 threadTitle
-            ).collect { result ->
+            )
+            NextcloudTalkApplication.sharedApplication?.let {
+                SyncMeDiagnostics.record(
+                    it,
+                    "send_repository_ready",
+                    SystemClock.elapsedRealtime() - syncMeRepositoryCallStartedAt
+                )
+            }
+            val syncMeCollectionStartedAt = SystemClock.elapsedRealtime()
+            syncMeSendFlow.collect { result ->
+                NextcloudTalkApplication.sharedApplication?.let {
+                    SyncMeDiagnostics.record(
+                        it,
+                        "send_result_wait",
+                        SystemClock.elapsedRealtime() - syncMeCollectionStartedAt
+                    )
+                }
                 NextcloudTalkApplication.sharedApplication?.let {
                     SyncMeDiagnostics.record(it, if (result.isSuccess) "send_network_success" else "send_network_error", SystemClock.elapsedRealtime() - syncMeSendStartedAt)
                 }

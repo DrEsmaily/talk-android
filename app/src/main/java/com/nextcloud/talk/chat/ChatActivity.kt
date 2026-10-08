@@ -237,6 +237,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -1524,9 +1525,17 @@ class ChatActivity :
         }
 
         lifecycleScope.launch {
-            chatViewModel.isLoadingFlow.collectLatest { isLoading ->
-                updateSearchLoadingIndicator(isLoading)
-            }
+            // Brief background refreshes used to flash the chat toolbar progress bar.
+            // Delay only the "show" transition; hiding it must remain immediate.
+            // Search mode owns the indicator independently via searchUiState.
+            chatViewModel.isLoadingFlow
+                .distinctUntilChanged()
+                .debounce { isLoading -> if (isLoading) 450L else 0L }
+                .collectLatest { isLoading ->
+                    if (chatViewModel.chatMode.value != ChatViewModel.ChatMode.SEARCH_MODE) {
+                        updateSearchLoadingIndicator(isLoading)
+                    }
+                }
         }
 
         lifecycleScope.launch {

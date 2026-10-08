@@ -1528,11 +1528,35 @@ class ChatActivity :
             // Brief background refreshes used to flash the chat toolbar progress bar.
             // Delay only the "show" transition; hiding it must remain immediate.
             // Search mode owns the indicator independently via searchUiState.
+            var loadingStartedAt: Long? = null
             chatViewModel.isLoadingFlow
                 .distinctUntilChanged()
+                .onEach { isLoading ->
+                    val now = SystemClock.elapsedRealtime()
+                    if (isLoading) {
+                        loadingStartedAt = now
+                        SyncMeDiagnostics.record(
+                            this@ChatActivity,
+                            "loading_started",
+                            SyncMeDiagnostics.elapsedSince(syncMeChatOpenStartedAt)
+                        )
+                    } else {
+                        SyncMeDiagnostics.record(
+                            this@ChatActivity,
+                            "loading_stopped_duration",
+                            loadingStartedAt?.let { now - it } ?: 0L
+                        )
+                        loadingStartedAt = null
+                    }
+                }
                 .debounce { isLoading -> if (isLoading) 450L else 0L }
                 .collectLatest { isLoading ->
                     if (chatViewModel.chatMode.value != ChatViewModel.ChatMode.SEARCH_MODE) {
+                        SyncMeDiagnostics.record(
+                            this@ChatActivity,
+                            if (isLoading) "loading_indicator_shown" else "loading_indicator_hidden",
+                            SyncMeDiagnostics.elapsedSince(syncMeChatOpenStartedAt)
+                        )
                         updateSearchLoadingIndicator(isLoading)
                     }
                 }

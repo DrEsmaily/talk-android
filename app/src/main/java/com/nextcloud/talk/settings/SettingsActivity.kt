@@ -19,6 +19,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import com.nextcloud.talk.BuildConfig
+import com.nextcloud.talk.utils.SyncMeDiagnostics
 import android.content.pm.PackageManager
 import android.graphics.PorterDuff
 import android.media.RingtoneManager
@@ -698,6 +700,17 @@ class SettingsActivity :
         }
         binding.shareReportWrapper.setOnClickListener {
             showShareReportDialog(this, userManager, appPreferences, logsRepository, saveZipLauncher)
+        }
+        if (BuildConfig.DEBUG) {
+            binding.shareReportWrapper.setOnLongClickListener {
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "SyncMe Talk chat timings")
+                    putExtra(Intent.EXTRA_TEXT, SyncMeDiagnostics.report(this@SettingsActivity))
+                }
+                startActivity(Intent.createChooser(send, "Share SyncMe chat timings"))
+                true
+            }
         }
     }
 

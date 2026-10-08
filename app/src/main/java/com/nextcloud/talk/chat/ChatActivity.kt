@@ -570,8 +570,10 @@ class ChatActivity :
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val syncMeChatOpenStartedAt = SystemClock.elapsedRealtime()
         super.onCreate(savedInstanceState)
         NextcloudTalkApplication.sharedApplication!!.componentApplication.inject(this)
+        if (BuildConfig.DEBUG) Log.d("SyncMeChatTiming", "chat activity injected in ${SystemClock.elapsedRealtime() - syncMeChatOpenStartedAt} ms")
 
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -624,12 +626,14 @@ class ChatActivity :
                     val urlForChatting = ApiUtils.getUrlForChat(chatApiVersion, conversationUser?.baseUrl, roomToken)
                     val credentials = ApiUtils.getCredentials(conversationUser!!.username, conversationUser!!.token)
 
+                    val syncMeInitStartedAt = SystemClock.elapsedRealtime()
                     chatViewModel.initData(
                         user,
                         credentials!!,
                         urlForChatting,
                         conversationThreadId
                     )
+                    if (BuildConfig.DEBUG) Log.d("SyncMeChatTiming", "initData returned in ${SystemClock.elapsedRealtime() - syncMeInitStartedAt} ms; activity elapsed ${SystemClock.elapsedRealtime() - syncMeChatOpenStartedAt} ms")
 
                     conversationThreadId?.let {
                         val threadUrl = ApiUtils.getUrlForThread(

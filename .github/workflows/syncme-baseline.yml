@@ -32,8 +32,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # GitHub-hosted Ubuntu runners already include Android command-line SDK tools.
+      # setup-android@v3 currently fails requesting the obsolete 'tools' package.
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          command -v sdkmanager
+          sdkmanager --version
       - name: Install Android API 37
         run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
       - name: Set up Gradle cache

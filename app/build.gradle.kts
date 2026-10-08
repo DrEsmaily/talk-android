@@ -92,8 +92,7 @@ android {
         create("qa") {
             applicationId = "com.nextcloud.talk2.qa"
             dimension = "default"
-            versionCode = 1
-            versionName = "1"
+            // Keep the real app version for server-side minimum-version checks.
         }
     }
 

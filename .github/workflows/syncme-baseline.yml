@@ -34,11 +34,19 @@ jobs:
           java-version: '17'
       # GitHub-hosted Ubuntu runners already include Android command-line SDK tools.
       # setup-android@v3 currently fails requesting the obsolete 'tools' package.
-      - name: Verify Android SDK
+      - name: Locate Android SDK command line tools
+        shell: bash
         run: |
+          set -euo pipefail
           echo "ANDROID_HOME=$ANDROID_HOME"
-          command -v sdkmanager
-          sdkmanager --version
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager not present under Android SDK; installed tool directories:"
+            ls -la "$ANDROID_HOME" || true
+            exit 1
+          fi
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          "$SDKMANAGER" --version
       - name: Install Android API 37
         run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
       - name: Set up Gradle cache

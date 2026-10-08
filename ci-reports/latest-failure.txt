@@ -1,6 +1,6 @@
-Failed build run: 37818913930
-Commit: 69867c87ab8f2da88018058c36fb0e6d290c1550
+Failed build run: 37821207522
+Commit: 6fc6520576226cecdf44fe87ca6bee93b0dfbb69
 Branch: syncme/stable-25.0.2
-Build details: https://github.com/DrEsmaily/talk-android/actions/runs/37818913930
+Build details: https://github.com/DrEsmaily/talk-android/actions/runs/37821207522
 ---
 Gradle log unavailable: failure occurred before compilation.

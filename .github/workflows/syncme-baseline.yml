@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: syncme-talk-${{ github.ref }}
-  cancel-in-progress: true
+  group: syncme-talk-${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 permissions:
   contents: write

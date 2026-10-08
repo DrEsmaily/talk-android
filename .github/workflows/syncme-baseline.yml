@@ -13,6 +13,7 @@ concurrency:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   build:
@@ -62,6 +63,29 @@ jobs:
             echo 'Build log not generated; check setup steps above.' >> "$GITHUB_STEP_SUMMARY"
           fi
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish safe failure summary as GitHub issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          {
+            echo "Build failed on ${GITHUB_REF_NAME}."
+            echo "Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "Commit: ${GITHUB_SHA}"
+            echo
+            echo '### Gradle failure lines (filtered)'
+            echo '```text'
+            if [ -f syncme-build.log ]; then
+              grep -E '(^FAILURE:|^\\* What went wrong:|^> |^e: |^error: |Execution failed for task|Could not resolve|Could not find|Plugin .* was not found|No matching variant|SDK location not found)' syncme-build.log | tail -n 65 | cut -c 1-320 || true
+            else
+              echo 'Failed before Gradle command; inspect linked job.'
+            fi
+            echo '```'
+          } > syncme-failure-issue.md
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "SyncMe Talk CI failure ${GITHUB_RUN_ID}" \
+            --body-file syncme-failure-issue.md || true
       - name: Upload full build log
         if: always()
         uses: actions/upload-artifact@v4

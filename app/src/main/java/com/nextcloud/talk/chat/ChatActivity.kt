@@ -60,6 +60,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -570,8 +571,11 @@ class ChatActivity :
         }
     }
 
+    private var syncMeChatOpenStartedAt = 0L
+    private var syncMeFirstMessagesRendered = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        val syncMeChatOpenStartedAt = SystemClock.elapsedRealtime()
+        syncMeChatOpenStartedAt = SystemClock.elapsedRealtime()
         super.onCreate(savedInstanceState)
         NextcloudTalkApplication.sharedApplication!!.componentApplication.inject(this)
         SyncMeDiagnostics.record(this, "activity_injected", SyncMeDiagnostics.elapsedSince(syncMeChatOpenStartedAt))
@@ -864,6 +868,21 @@ class ChatActivity :
                 val chatMode by chatViewModel.chatMode.collectAsStateWithLifecycle()
                 val participantPermissions by participantPermissionsFlow.collectAsStateWithLifecycle()
                 currentConversation = uiState.conversation
+
+                // First frame with messages: useful without ADB, recorded once per chat opening.
+                LaunchedEffect(uiState.items.isNotEmpty()) {
+                    if (uiState.items.isNotEmpty() && !syncMeFirstMessagesRendered) {
+                        withFrameNanos { }
+                        if (!syncMeFirstMessagesRendered) {
+                            syncMeFirstMessagesRendered = true
+                            SyncMeDiagnostics.record(
+                                this@ChatActivity,
+                                "first_messages_frame",
+                                SyncMeDiagnostics.elapsedSince(syncMeChatOpenStartedAt)
+                            )
+                        }
+                    }
+                }
 
                 LaunchedEffect(uiState.isInLobby, uiState.conversation?.lobbyTimer, uiState.conversation?.description) {
                     if (uiState.isInLobby) {

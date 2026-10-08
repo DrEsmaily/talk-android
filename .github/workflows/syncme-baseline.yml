@@ -35,7 +35,8 @@ jobs:
       - name: Compile independent QA debug APK
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleQaDebug --no-daemon --stacktrace
+          set -o pipefail
+          ./gradlew :app:assembleQaDebug --no-daemon --stacktrace --console=plain 2>&1 | tee syncme-build.log
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
@@ -43,4 +44,12 @@ jobs:
           name: syncme-talk-25.0.2-baseline-qa-debug
           path: app/build/outputs/apk/qa/debug/*.apk
           if-no-files-found: error
+          retention-days: 14
+      - name: Upload full build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: syncme-build-log
+          path: syncme-build.log
+          if-no-files-found: warn
           retention-days: 14

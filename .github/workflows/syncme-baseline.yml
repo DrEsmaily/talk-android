@@ -7,6 +7,10 @@ on:
       - 'syncme/stable-25.0.2'
   workflow_dispatch:
 
+concurrency:
+  group: syncme-talk-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -45,6 +49,19 @@ jobs:
           path: app/build/outputs/apk/qa/debug/*.apk
           if-no-files-found: error
           retention-days: 14
+      - name: Summarize build failures
+        if: failure()
+        shell: bash
+        run: |
+          echo '## SyncMe Talk build failure' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Gradle errors:' >> "$GITHUB_STEP_SUMMARY"
+          echo '\`\`\`text' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f syncme-build.log ]; then
+            grep -E -A 8 '(^FAILURE:|^\\* What went wrong:|^> |^e: |^error: |Execution failed for task|Could not resolve|Could not find|What went wrong)' syncme-build.log | tail -n 120 >> "$GITHUB_STEP_SUMMARY" || true
+          else
+            echo 'Build log not generated; check setup steps above.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo '\`\`\`' >> "$GITHUB_STEP_SUMMARY"
       - name: Upload full build log
         if: always()
         uses: actions/upload-artifact@v4
